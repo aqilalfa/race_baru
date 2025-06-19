@@ -23,6 +23,7 @@ Gunakan kode program yang tersedia untuk melakukan penyerangan :
 ```
 > python attack.py
 ```
+Karena ini adalah solusi dari RaceCondition maka untuk bug tersebut sudah di solve dan penyerang tidak dapat melakukan serangan race condition
 
 Setelah dilakukan penyerangan
 
