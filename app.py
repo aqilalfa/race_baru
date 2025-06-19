@@ -104,38 +104,37 @@ class API:
     @staticmethod
     @db.connection_context()
     def buy(product_id: int) -> (bool, str):
-        # get product pricing
-        product_objs = Product \
-            .select() \
-            .where(Product.id == product_id)
-        if len(product_objs) == 0:
-            return False, "No such product"
-        product_obj = product_objs[0]
+        with db.atomic():
+            product_objs = Product.select().where(Product.id == product_id)
+            if len(product_objs) == 0:
+                return False, "No such product"
+            product_obj = product_objs[0]
 
-        user_objs = User \
-            .select()
-        if len(user_objs) == 0:
-            return False, "Wrong Token"
-        user_obj = user_objs[0]
+            user_objs = User.select()
+            if len(user_objs) == 0:
+                return False, "Wrong Token"
+            user_obj = user_objs[0]
 
-        if product_obj.price > user_obj.balance:
-            return False, "No money you have bro..."
-        try:
-            PurchaseLog.create(
-                user_id=user_obj.id,
-                product_id=product_obj.id,
-                paid_amount=product_obj.price
-            )
-        except IntegrityError as e:
-            print(e)
-            return False, "System error"
+            # PATCH: Update saldo hanya jika saldo cukup, dalam satu query
+            updated = User.update(
+                balance=User.balance - product_obj.price
+            ).where(
+                (User.id == user_obj.id) & (User.balance >= product_obj.price)
+            ).execute()
 
-        User\
-            .update(balance=user_obj.balance - product_obj.price)\
-            .where(User.id == user_obj.id)\
-            .execute()
+            if updated == 0:
+                return False, "No money you have bro..."
+
+            try:
+                PurchaseLog.create(
+                    user_id=user_obj.id,
+                    product_id=product_obj.id,
+                    paid_amount=product_obj.price
+                )
+            except IntegrityError as e:
+                print(e)
+                return False, "System error"
         return True, ""
-
     @staticmethod
     @db.connection_context()
     def sell(purchase_id: int) -> (bool, str):

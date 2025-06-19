@@ -4,4 +4,4 @@ RUN apk add --no-cache sqlite-dev
 WORKDIR /home/src
 RUN pip install flask peewee gunicorn
 COPY . .
-CMD ["gunicorn", "app:app", "--workers", "20", "--timeout", "2", "-b", "0.0.0.0:1002"]
+CMD ["gunicorn", "app:app", "--workers", "1", "--timeout", "2", "-b", "0.0.0.0:1002"]
